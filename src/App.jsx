@@ -10,6 +10,7 @@ import HistoryDrawer from './components/HistoryDrawer';
 import HowItWorks from './components/HowItWorks';
 import SecurityInfo from './components/SecurityInfo';
 import About from './components/About';
+import PasswordChecker from './components/PasswordChecker';
 import Footer from './components/Footer';
 
 import { ACCOUNT_TYPES } from './data/accountPolicies';
@@ -201,6 +202,7 @@ export default function App() {
           </div>
         )}
 
+        {activeTab === 'checker' && <PasswordChecker />}
         {activeTab === 'how-it-works' && <HowItWorks />}
         {activeTab === 'security' && <SecurityInfo />}
         {activeTab === 'about' && <About />}

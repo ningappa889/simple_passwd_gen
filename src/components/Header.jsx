@@ -1,9 +1,10 @@
 import React from 'react';
-import { ShieldCheck, Lock, Cpu, Eye, BookOpen, Info, Sparkles, KeyRound } from 'lucide-react';
+import { ShieldCheck, Lock, Cpu, Eye, BookOpen, Info, Sparkles, KeyRound, Search } from 'lucide-react';
 
 export default function Header({ activeTab, setActiveTab, historyCount, onOpenHistory }) {
   const navItems = [
     { id: 'generator', label: 'Generator', icon: KeyRound },
+    { id: 'checker', label: 'Password Checker', icon: Search },
     { id: 'how-it-works', label: 'How It Works', icon: BookOpen },
     { id: 'security', label: 'Security', icon: ShieldCheck },
     { id: 'about', label: 'About', icon: Info }
