@@ -83,18 +83,34 @@ export default function PasswordOptions({
         </div>
       </div>
 
-      {/* Password Length Slider */}
+      {/* Password Length Slider & Direct Number Input */}
       <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
         <div className="flex items-center justify-between mb-3">
           <label htmlFor="password-length-slider" className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
             <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
             <span>3. Password Length</span>
           </label>
+
+          {/* Interactive Direct Number Input */}
           <div className="flex items-center space-x-2">
             <span className="text-xs text-slate-400 font-mono">Length:</span>
-            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-mono font-bold rounded-lg shadow-sm">
-              {length} characters
-            </span>
+            <div className="flex items-center bg-slate-900 border border-emerald-500/40 rounded-lg px-2.5 py-1 space-x-1 shadow-sm focus-within:border-emerald-400">
+              <input
+                id="password-length-input"
+                type="number"
+                min="12"
+                max="32"
+                value={length}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val)) {
+                    setLength(Math.max(12, Math.min(32, val)));
+                  }
+                }}
+                className="w-10 bg-transparent text-emerald-400 font-mono font-bold text-sm text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <span className="text-xs text-slate-400 font-mono">chars</span>
+            </div>
           </div>
         </div>
 

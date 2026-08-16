@@ -111,10 +111,10 @@ export default function App() {
     }
   };
 
-  // Initial load password generation
+  // Auto-generate password whenever style, length, or character sets change
   useEffect(() => {
     handleGenerate();
-  }, []);
+  }, [style, length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
 
   return (
     <div className="min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
