@@ -68,7 +68,9 @@ export const COMMON_BREACHED_PASSWORDS = new Set([
 ]);
 
 /**
- * Checks if a password is a known breached password or contains a top breached root.
+ * Checks if a password is a known breached password or a short variation of one.
+ * If a long password (e.g. >16 chars) contains a dictionary word but has 12+ random characters appended,
+ * it is NOT marked as breached because the high-entropy suffix protects it.
  * 
  * @param {string} password 
  * @returns {Object|null} Breach info if found, null if clean
@@ -77,7 +79,7 @@ export function checkBreachStatus(password) {
   if (!password) return null;
   const cleanPwd = password.toLowerCase().trim();
 
-  // 1. Direct exact match
+  // 1. Direct exact match in breach dictionary
   if (COMMON_BREACHED_PASSWORDS.has(cleanPwd)) {
     return {
       isBreached: true,
@@ -87,22 +89,26 @@ export function checkBreachStatus(password) {
     };
   }
 
-  // 2. Contains top breached term (e.g. "password123!", "myAdmin2026", "iloveyou99")
+  // 2. Short variations (e.g. "password123!", "myAdmin123")
+  // Only mark as breached if string is short (<= 16 chars) or remaining random chars < 8
   for (const breachedTerm of COMMON_BREACHED_PASSWORDS) {
     if (breachedTerm.length >= 5 && cleanPwd.includes(breachedTerm)) {
-      return {
-        isBreached: true,
-        severity: 'High',
-        reason: `Contains top leaked dictionary root term "${breachedTerm}".`,
-        estimatedExposures: '1,000,000+ data leaks'
-      };
+      const remainingLength = cleanPwd.length - breachedTerm.length;
+      if (cleanPwd.length <= 16 || remainingLength < 8) {
+        return {
+          isBreached: true,
+          severity: 'High',
+          reason: `Short variation containing top leaked dictionary term "${breachedTerm}".`,
+          estimatedExposures: '1,000,000+ data leaks'
+        };
+      }
     }
   }
 
   return {
     isBreached: false,
     severity: 'Safe',
-    reason: 'No match in common data breach dictionaries.',
+    reason: 'No exact match in common data breach dictionaries.',
     estimatedExposures: '0'
   };
 }

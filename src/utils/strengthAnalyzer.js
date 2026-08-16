@@ -32,7 +32,7 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits) {
   const uniqueCount = new Set(password.split('')).size;
   let effectiveBits = initialEntropyBits;
 
-  // Check breach status from database
+  // Check breach status from dataset (returns isBreached: true ONLY for exact matches or short variations)
   const breachInfo = checkBreachStatus(password);
 
   // Check for common bad patterns & dictionary words
@@ -41,6 +41,13 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits) {
   if (breachInfo && breachInfo.isBreached) {
     warnings.push(`🚨 COMPROMISED / BREACHABLE PASSWORD: ${breachInfo.reason}`);
     effectiveBits = 10.0;
+  } else if (isCommonPattern) {
+    if (password.length <= 16) {
+      warnings.push('Contains a heavily leaked dictionary term or predictable sequence (e.g. "password", "123").');
+      effectiveBits = Math.min(effectiveBits, 28.0);
+    } else {
+      warnings.push('Contains common word "password", but high-entropy random characters provide strong security.');
+    }
   }
 
   if (/(.)\1{2,}/.test(password)) {
@@ -51,12 +58,7 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits) {
     warnings.push(`Extremely low character diversity: Only ${uniqueCount} unique character(s) used.`);
   }
 
-  if (isCommonPattern && (!breachInfo || !breachInfo.isBreached)) {
-    warnings.push('Contains a heavily leaked dictionary term or predictable sequence (e.g. "password", "123").');
-    effectiveBits = Math.min(effectiveBits, 28.0);
-  }
-
-  // Determine Strength Label & Percent based on effective entropy bits and pattern warnings
+  // Determine Strength Label & Percent based on effective entropy bits and breach status
   let score = 0;
   let label = 'Weak';
   let color = 'bg-red-500';
@@ -71,13 +73,13 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits) {
     textColor = 'text-rose-400';
     borderColor = 'border-rose-500/80';
     percent = 10;
-  } else if ((uniqueCount <= 2 && password.length >= 4) || isCommonPattern || effectiveBits < 45) {
+  } else if ((uniqueCount <= 2 && password.length >= 4) || effectiveBits < 45) {
     score = 0;
     label = 'Weak';
     color = 'bg-red-500';
     textColor = 'text-red-400';
     borderColor = 'border-red-500/50';
-    percent = isCommonPattern ? 15 : 25;
+    percent = 25;
   } else if (effectiveBits < 65) {
     score = 1;
     label = 'Moderate';
@@ -108,9 +110,9 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits) {
   if (breachInfo && breachInfo.isBreached) {
     memorability = 'High';
     memorabilityExplanation = 'Extremely easy to remember, BUT EXTREMELY UNSAFE! This password has been exposed in public data leaks and is tested automatically by hacker botnets.';
-  } else if (isCommonPattern) {
+  } else if (isCommonPattern && password.length <= 16) {
     memorability = 'High';
-    memorabilityExplanation = 'Very easy to remember, but extremely unsafe because dictionary words and predictable numbers are guessed instantly by automated hacker tools.';
+    memorabilityExplanation = 'Very easy to remember, but unsafe because short dictionary words and predictable numbers are guessed instantly by automated hacker tools.';
   } else if (uniqueCount <= 2) {
     memorability = 'Low';
     memorabilityExplanation = 'Repetitive single-character patterns offer no security against automated guessing.';
