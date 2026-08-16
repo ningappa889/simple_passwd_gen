@@ -43,17 +43,33 @@ export default function PasswordOptions({
   ];
 
   const quickLengths = [12, 16, 20, 24, 32];
+  const [localInputStr, setLocalInputStr] = React.useState(String(length));
 
-  const handleNumberChange = (e) => {
-    const rawVal = e.target.value;
-    if (rawVal === '') {
-      setLength('');
-      return;
+  React.useEffect(() => {
+    setLocalInputStr(String(length));
+  }, [length]);
+
+  const handleInputChange = (e) => {
+    const raw = e.target.value;
+    setLocalInputStr(raw);
+
+    if (raw === '') return;
+
+    const val = parseInt(raw, 10);
+    if (!isNaN(val) && val >= 8 && val <= 64) {
+      setLength(val);
     }
-    const val = parseInt(rawVal, 10);
-    if (!isNaN(val)) {
-      setLength(Math.max(8, Math.min(64, val)));
+  };
+
+  const handleInputBlur = () => {
+    let val = parseInt(localInputStr, 10);
+    if (isNaN(val) || val < 12) {
+      val = 12;
+    } else if (val > 64) {
+      val = 64;
     }
+    setLength(val);
+    setLocalInputStr(String(val));
   };
 
   return (
@@ -114,8 +130,9 @@ export default function PasswordOptions({
                 type="number"
                 min="8"
                 max="64"
-                value={length}
-                onChange={handleNumberChange}
+                value={localInputStr}
+                onChange={handleInputChange}
+                onBlur={handleInputBlur}
                 className="w-12 bg-transparent text-emerald-400 font-mono font-bold text-base text-center focus:outline-none"
               />
               <span className="text-xs text-slate-400 font-mono">chars</span>
