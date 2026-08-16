@@ -42,7 +42,7 @@ export default function PasswordOptions({
     }
   ];
 
-  const quickLengths = [12, 16, 20, 24, 32];
+  const quickLengths = [8, 12, 16, 20, 24, 32];
   const [localInputStr, setLocalInputStr] = React.useState(String(length));
 
   React.useEffect(() => {
@@ -63,8 +63,8 @@ export default function PasswordOptions({
 
   const handleInputBlur = () => {
     let val = parseInt(localInputStr, 10);
-    if (isNaN(val) || val < 12) {
-      val = 12;
+    if (isNaN(val) || val < 8) {
+      val = 8;
     } else if (val > 64) {
       val = 64;
     }
@@ -166,14 +166,14 @@ export default function PasswordOptions({
           <input
             id="password-length-slider"
             type="range"
-            min="12"
+            min="8"
             max="32"
             value={typeof length === 'number' ? length : 16}
             onChange={(e) => setLength(parseInt(e.target.value, 10))}
             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
           />
           <div className="flex justify-between text-[10px] font-mono text-slate-500">
-            <span>12 (Short)</span>
+            <span>8 (Short)</span>
             <span>20 (Balanced)</span>
             <span>32 (Max)</span>
           </div>
