@@ -42,6 +42,20 @@ export default function PasswordOptions({
     }
   ];
 
+  const quickLengths = [12, 16, 20, 24, 32];
+
+  const handleNumberChange = (e) => {
+    const rawVal = e.target.value;
+    if (rawVal === '') {
+      setLength('');
+      return;
+    }
+    const val = parseInt(rawVal, 10);
+    if (!isNaN(val)) {
+      setLength(Math.max(8, Math.min(64, val)));
+    }
+  };
+
   return (
     <div className="glass-card rounded-2xl p-5 border border-slate-800 shadow-xl space-y-6">
       
@@ -83,51 +97,68 @@ export default function PasswordOptions({
         </div>
       </div>
 
-      {/* Password Length Slider & Direct Number Input */}
-      <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-        <div className="flex items-center justify-between mb-3">
-          <label htmlFor="password-length-slider" className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
+      {/* Password Length Section: Direct Input + Slider + Presets */}
+      <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800/80 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <label htmlFor="password-length-input" className="text-sm font-semibold text-slate-200 flex items-center space-x-2">
             <SlidersHorizontal className="w-4 h-4 text-emerald-400" />
             <span>3. Password Length</span>
           </label>
 
-          {/* Interactive Direct Number Input */}
+          {/* Interactive Direct Number Input Box */}
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-400 font-mono">Length:</span>
-            <div className="flex items-center bg-slate-900 border border-emerald-500/40 rounded-lg px-2.5 py-1 space-x-1 shadow-sm focus-within:border-emerald-400">
+            <span className="text-xs text-slate-400 font-mono">Set Length:</span>
+            <div className="flex items-center bg-slate-900 border border-emerald-500/60 focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400 rounded-xl px-3 py-1 space-x-1 shadow-inner">
               <input
                 id="password-length-input"
                 type="number"
-                min="12"
-                max="32"
+                min="8"
+                max="64"
                 value={length}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val)) {
-                    setLength(Math.max(12, Math.min(32, val)));
-                  }
-                }}
-                className="w-10 bg-transparent text-emerald-400 font-mono font-bold text-sm text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onChange={handleNumberChange}
+                className="w-12 bg-transparent text-emerald-400 font-mono font-bold text-base text-center focus:outline-none"
               />
               <span className="text-xs text-slate-400 font-mono">chars</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-2">
+        {/* Quick Length Preset Pills */}
+        <div className="flex items-center space-x-2">
+          <span className="text-[11px] text-slate-500 font-mono">Presets:</span>
+          <div className="flex flex-wrap gap-1.5">
+            {quickLengths.map((qLen) => (
+              <button
+                key={qLen}
+                type="button"
+                onClick={() => setLength(qLen)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all ${
+                  length === qLen
+                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm'
+                    : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800'
+                }`}
+              >
+                {qLen}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sync Range Slider */}
+        <div className="space-y-1 pt-1">
           <input
             id="password-length-slider"
             type="range"
             min="12"
             max="32"
-            value={length}
+            value={typeof length === 'number' ? length : 16}
             onChange={(e) => setLength(parseInt(e.target.value, 10))}
             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none"
           />
-          <div className="flex justify-between text-[11px] font-mono text-slate-500">
-            <span>12 (Standard)</span>
-            <span>20 (Strong)</span>
-            <span>32 (Maximum)</span>
+          <div className="flex justify-between text-[10px] font-mono text-slate-500">
+            <span>12 (Short)</span>
+            <span>20 (Balanced)</span>
+            <span>32 (Max)</span>
           </div>
         </div>
       </div>
@@ -141,63 +172,63 @@ export default function PasswordOptions({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           
-          <label className={`flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-            includeUppercase ? 'bg-slate-900 border-emerald-500/50 text-slate-200' : 'bg-slate-950/40 border-slate-800 text-slate-500'
+          <label className={`flex items-center space-x-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${
+            includeUppercase ? 'bg-slate-900/90 border-emerald-500/60 text-slate-100 shadow-sm' : 'bg-slate-950/40 border-slate-800/80 text-slate-500'
           }`}>
             <input
               type="checkbox"
               checked={includeUppercase}
               onChange={(e) => setIncludeUppercase(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500"
+              className="w-4.5 h-4.5 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
             />
             <div className="flex items-center space-x-1.5">
-              <CaseSensitive className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-medium">Uppercase (A-Z)</span>
+              <CaseSensitive className={`w-4 h-4 ${includeUppercase ? 'text-emerald-400' : 'text-slate-600'}`} />
+              <span className="text-xs font-semibold">Uppercase (A-Z)</span>
             </div>
           </label>
 
-          <label className={`flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-            includeLowercase ? 'bg-slate-900 border-emerald-500/50 text-slate-200' : 'bg-slate-950/40 border-slate-800 text-slate-500'
+          <label className={`flex items-center space-x-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${
+            includeLowercase ? 'bg-slate-900/90 border-emerald-500/60 text-slate-100 shadow-sm' : 'bg-slate-950/40 border-slate-800/80 text-slate-500'
           }`}>
             <input
               type="checkbox"
               checked={includeLowercase}
               onChange={(e) => setIncludeLowercase(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500"
+              className="w-4.5 h-4.5 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
             />
             <div className="flex items-center space-x-1.5">
-              <Type className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-medium">Lowercase (a-z)</span>
+              <Type className={`w-4 h-4 ${includeLowercase ? 'text-cyan-400' : 'text-slate-600'}`} />
+              <span className="text-xs font-semibold">Lowercase (a-z)</span>
             </div>
           </label>
 
-          <label className={`flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-            includeNumbers ? 'bg-slate-900 border-emerald-500/50 text-slate-200' : 'bg-slate-950/40 border-slate-800 text-slate-500'
+          <label className={`flex items-center space-x-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${
+            includeNumbers ? 'bg-slate-900/90 border-emerald-500/60 text-slate-100 shadow-sm' : 'bg-slate-950/40 border-slate-800/80 text-slate-500'
           }`}>
             <input
               type="checkbox"
               checked={includeNumbers}
               onChange={(e) => setIncludeNumbers(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500"
+              className="w-4.5 h-4.5 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
             />
             <div className="flex items-center space-x-1.5">
-              <Binary className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-medium">Numbers (0-9)</span>
+              <Binary className={`w-4 h-4 ${includeNumbers ? 'text-amber-400' : 'text-slate-600'}`} />
+              <span className="text-xs font-semibold">Numbers (0-9)</span>
             </div>
           </label>
 
-          <label className={`flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-            includeSymbols ? 'bg-slate-900 border-emerald-500/50 text-slate-200' : 'bg-slate-950/40 border-slate-800 text-slate-500'
+          <label className={`flex items-center space-x-3 p-3.5 rounded-xl border cursor-pointer select-none transition-all ${
+            includeSymbols ? 'bg-slate-900/90 border-emerald-500/60 text-slate-100 shadow-sm' : 'bg-slate-950/40 border-slate-800/80 text-slate-500'
           }`}>
             <input
               type="checkbox"
               checked={includeSymbols}
               onChange={(e) => setIncludeSymbols(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500"
+              className="w-4.5 h-4.5 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
             />
             <div className="flex items-center space-x-1.5">
-              <Hash className="w-4 h-4 text-violet-400" />
-              <span className="text-xs font-medium">Symbols (!@#$)</span>
+              <Hash className={`w-4 h-4 ${includeSymbols ? 'text-violet-400' : 'text-slate-600'}`} />
+              <span className="text-xs font-semibold">Symbols (!@#$)</span>
             </div>
           </label>
 

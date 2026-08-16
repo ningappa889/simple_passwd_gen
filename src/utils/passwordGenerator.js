@@ -6,7 +6,7 @@ import { getSecureRandomInt, getRandomArrayElement, secureShuffleArray } from '.
  * Example: Orbit-Mango7!River-Cactus or Silver!Falcon82-Cloud
  * 
  * @param {Object} options
- * @param {number} options.targetLength Desired length approximate/floor
+ * @param {number} options.length Desired target length (12 - 32)
  * @param {boolean} options.includeUppercase
  * @param {boolean} options.includeNumbers
  * @param {boolean} options.includeSymbols
@@ -14,31 +14,38 @@ import { getSecureRandomInt, getRandomArrayElement, secureShuffleArray } from '.
  */
 export function generateMemorablePassphrase(options = {}) {
   const {
-    targetLength = 20,
+    length = 20,
+    targetLength,
     includeUppercase = true,
     includeNumbers = true,
     includeSymbols = true
   } = options;
 
-  // Determine word count based on target length (3 to 6 words)
-  let wordCount = Math.max(3, Math.min(6, Math.round(targetLength / 5)));
-  if (targetLength >= 26) wordCount = 5;
-  if (targetLength >= 30) wordCount = 6;
+  const reqLength = targetLength || length || 20;
+
+  // Calibrate word count to match target character length closely
+  let wordCount = 2;
+  if (reqLength <= 18) wordCount = 2;
+  else if (reqLength <= 24) wordCount = 3;
+  else if (reqLength <= 29) wordCount = 4;
+  else wordCount = 5;
 
   // Select unique random words from WORDLIST
-  const selectedWords = [];
-  const wordPool = [...WORDLIST];
+  // Filter wordpool to shorter 3-5 letter words if reqLength is small
+  let wordPool = [...WORDLIST];
+  if (reqLength <= 16) {
+    wordPool = wordPool.filter(w => w.length <= 5);
+  }
 
+  const selectedWords = [];
   for (let i = 0; i < wordCount; i++) {
-    if (wordPool.length === 0) break;
+    if (wordPool.length === 0) wordPool = [...WORDLIST];
     const wordIndex = getSecureRandomInt(wordPool.length);
     let word = wordPool.splice(wordIndex, 1)[0];
 
-    // Case formatting
     if (!includeUppercase) {
       word = word.toLowerCase();
     } else {
-      // Capitalize first letter or alternate randomly
       word = word.charAt(0).toUpperCase() + word.slice(1);
     }
     selectedWords.push(word);
@@ -52,7 +59,7 @@ export function generateMemorablePassphrase(options = {}) {
 
   // Insert random number (e.g. 7 or 82) into one of the word positions
   if (includeNumbers) {
-    const num = getSecureRandomInt(90) + 10; // 2 digit number between 10 and 99
+    const num = getSecureRandomInt(90) + 10; // 2-digit number
     const numPos = getSecureRandomInt(passphraseParts.length);
     passphraseParts[numPos] += num.toString();
   }
@@ -65,17 +72,6 @@ export function generateMemorablePassphrase(options = {}) {
   }
 
   let passphrase = passphraseParts.join(separator);
-
-  // If length is slightly less than target length and we need more padding, append an extra digit/symbol
-  while (passphrase.length < targetLength) {
-    if (includeNumbers && getSecureRandomInt(2) === 0) {
-      passphrase += getSecureRandomInt(10);
-    } else if (includeSymbols) {
-      passphrase += getRandomArrayElement(SYMBOLS.split(''));
-    } else {
-      passphrase += getRandomArrayElement(LOWERCASE.split(''));
-    }
-  }
 
   return passphrase;
 }
@@ -95,11 +91,14 @@ export function generateMemorablePassphrase(options = {}) {
 export function generateStrongPassword(options = {}) {
   const {
     length = 16,
+    targetLength,
     includeUppercase = true,
     includeLowercase = true,
     includeNumbers = true,
     includeSymbols = true
   } = options;
+
+  const reqLength = targetLength || length || 16;
 
   let pool = '';
   const guaranteedChars = [];
@@ -128,35 +127,36 @@ export function generateStrongPassword(options = {}) {
   }
 
   const poolArray = pool.split('');
-  const remainingLength = Math.max(0, length - guaranteedChars.length);
+  const remainingLength = Math.max(0, reqLength - guaranteedChars.length);
   const passwordChars = [...guaranteedChars];
 
   for (let i = 0; i < remainingLength; i++) {
     passwordChars.push(getRandomArrayElement(poolArray));
   }
 
-  // Shuffle to ensure guaranteed chars are not always at the beginning
-  return secureShuffleArray(passwordChars).join('');
+  // Shuffle and slice to strictly match target length
+  return secureShuffleArray(passwordChars).slice(0, reqLength).join('');
 }
 
 /**
  * Main Password Dispatcher
  */
 export function generatePassword(options = {}) {
-  const { style = 'passphrase' } = options;
+  const { style = 'passphrase', length = 16, targetLength } = options;
+  const reqLength = targetLength || length || 16;
 
   if (style === 'passphrase') {
-    return generateMemorablePassphrase(options);
+    return generateMemorablePassphrase({ ...options, length: reqLength });
   } else if (style === 'max') {
     return generateStrongPassword({
       ...options,
-      length: Math.max(24, options.length || 24),
+      length: Math.max(24, reqLength),
       includeUppercase: true,
       includeLowercase: true,
       includeNumbers: true,
       includeSymbols: true
     });
   } else {
-    return generateStrongPassword(options);
+    return generateStrongPassword({ ...options, length: reqLength });
   }
 }
