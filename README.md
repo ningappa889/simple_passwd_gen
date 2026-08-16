@@ -37,8 +37,8 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/ningappa889/simple_passwd_gen.git
-   cd simple_passwd_gen
+   git clone https://github.com/ningappa889/smartpass.git
+   cd smartpass
    ```
 
 2. Install dependencies:
