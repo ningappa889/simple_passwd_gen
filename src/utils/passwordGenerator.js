@@ -3,7 +3,7 @@ import { getSecureRandomInt, getRandomArrayElement, secureShuffleArray } from '.
 
 /**
  * Generates a memorable passphrase using cryptographically secure random words and symbols.
- * Example: Orbit-Mango7!River-Cactus or Silver!Falcon82-Cloud
+ * Guarantees that total character length strictly matches reqLength.
  * 
  * @param {Object} options
  * @param {number} options.length Desired target length (12 - 32)
@@ -17,6 +17,7 @@ export function generateMemorablePassphrase(options = {}) {
     length = 20,
     targetLength,
     includeUppercase = true,
+    includeLowercase = true,
     includeNumbers = true,
     includeSymbols = true
   } = options;
@@ -25,13 +26,12 @@ export function generateMemorablePassphrase(options = {}) {
 
   // Calibrate word count to match target character length closely
   let wordCount = 2;
-  if (reqLength <= 18) wordCount = 2;
-  else if (reqLength <= 24) wordCount = 3;
-  else if (reqLength <= 29) wordCount = 4;
+  if (reqLength <= 16) wordCount = 2;
+  else if (reqLength <= 22) wordCount = 3;
+  else if (reqLength <= 28) wordCount = 4;
   else wordCount = 5;
 
   // Select unique random words from WORDLIST
-  // Filter wordpool to shorter 3-5 letter words if reqLength is small
   let wordPool = [...WORDLIST];
   if (reqLength <= 16) {
     wordPool = wordPool.filter(w => w.length <= 5);
@@ -72,6 +72,24 @@ export function generateMemorablePassphrase(options = {}) {
   }
 
   let passphrase = passphraseParts.join(separator);
+
+  // Pad passphrase if it falls short of reqLength
+  while (passphrase.length < reqLength) {
+    if (includeNumbers && getSecureRandomInt(2) === 0) {
+      passphrase += getSecureRandomInt(10);
+    } else if (includeSymbols && getSecureRandomInt(2) === 0) {
+      passphrase += getRandomArrayElement(SYMBOLS.split(''));
+    } else if (includeLowercase) {
+      passphrase += getRandomArrayElement(LOWERCASE.split(''));
+    } else {
+      passphrase += getSecureRandomInt(10);
+    }
+  }
+
+  // Slice passphrase to exact reqLength if it exceeds
+  if (passphrase.length > reqLength) {
+    passphrase = passphrase.slice(0, reqLength);
+  }
 
   return passphrase;
 }
