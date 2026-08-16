@@ -3,18 +3,46 @@ import { calculateEntropy } from '../utils/entropyCalculator';
 import { evaluatePasswordStrength } from '../utils/strengthAnalyzer';
 import StrengthMeter from './StrengthMeter';
 import EntropyDisplay from './EntropyDisplay';
-import { ShieldCheck, Lock, Eye, EyeOff, Search, Sparkles, KeyRound, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Lock, Eye, EyeOff, Search, KeyRound, CheckCircle2 } from 'lucide-react';
 
-export default function PasswordChecker() {
+export default function PasswordChecker({ onAddCheckerHistory }) {
   const [inputPassword, setInputPassword] = useState('');
   const [showPassword, setShowPassword] = useState(true);
+  const [checkedData, setCheckedData] = useState(null);
 
-  // Auto-detect style based on structure (if hyphens/underscores/dots present, evaluate as passphrase)
-  const isPassphraseLike = /[-._]/.test(inputPassword) && inputPassword.length >= 12;
-  const detectedStyle = isPassphraseLike ? 'passphrase' : 'strong';
+  const handleCheckStrength = (e) => {
+    if (e) e.preventDefault();
+    if (!inputPassword || inputPassword.trim().length === 0) return;
 
-  const entropyInfo = calculateEntropy(inputPassword, detectedStyle);
-  const strengthInfo = evaluatePasswordStrength(inputPassword, detectedStyle, entropyInfo.bits);
+    const isPassphraseLike = /[-._]/.test(inputPassword) && inputPassword.length >= 12;
+    const detectedStyle = isPassphraseLike ? 'passphrase' : 'strong';
+
+    const entropyInfo = calculateEntropy(inputPassword, detectedStyle);
+    const strengthInfo = evaluatePasswordStrength(inputPassword, detectedStyle, entropyInfo.bits);
+
+    setCheckedData({
+      password: inputPassword,
+      entropyInfo,
+      strengthInfo
+    });
+
+    if (onAddCheckerHistory) {
+      onAddCheckerHistory({
+        password: inputPassword,
+        label: strengthInfo.label,
+        bits: entropyInfo.bits,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      });
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setInputPassword(e.target.value);
+    // Clear previous check output when user starts typing new password until they click Check Strength
+    if (checkedData && e.target.value !== checkedData.password) {
+      setCheckedData(null);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
@@ -28,7 +56,7 @@ export default function PasswordChecker() {
           Password Security & Entropy Checker
         </h1>
         <p className="text-slate-400 text-sm max-w-2xl mx-auto leading-relaxed">
-          Type or paste any password below to evaluate its cryptographic bit entropy, character distribution, estimated brute-force crack duration, and memorability score.
+          Type or paste your password below and click <strong className="text-emerald-400">Check Strength</strong> to evaluate its cryptographic bit entropy, character distribution, estimated brute-force crack duration, and memorability score.
         </p>
 
         <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
@@ -37,12 +65,12 @@ export default function PasswordChecker() {
         </div>
       </div>
 
-      {/* Password Input Box */}
-      <div className="glass-card rounded-2xl p-6 border border-slate-700/80 shadow-2xl space-y-4">
+      {/* Password Input Box Form */}
+      <form onSubmit={handleCheckStrength} className="glass-card rounded-2xl p-6 border border-slate-700/80 shadow-2xl space-y-5">
         <div className="flex items-center justify-between">
           <label htmlFor="custom-password-input" className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-300 flex items-center space-x-2">
             <KeyRound className="w-4 h-4 text-emerald-400" />
-            <span>Enter Your Password to Analyze</span>
+            <span>Enter Password to Analyze</span>
           </label>
 
           <button
@@ -60,27 +88,37 @@ export default function PasswordChecker() {
             id="custom-password-input"
             type={showPassword ? 'text' : 'password'}
             value={inputPassword}
-            onChange={(e) => setInputPassword(e.target.value)}
-            placeholder="Type or paste your password here (e.g. MySecretPass123!)..."
+            onChange={handleInputChange}
+            placeholder="Type or paste your complete password here..."
             className="w-full bg-slate-950/90 text-emerald-300 font-mono text-lg sm:text-xl font-bold rounded-xl px-4 py-4 border border-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-600 placeholder:text-sm placeholder:font-sans"
           />
         </div>
 
-        {inputPassword.length === 0 && (
-          <p className="text-xs text-slate-500 text-center py-2 italic">
-            Start typing above to view real-time strength meter, entropy bits, character distribution, and memorability analysis.
+        {/* Check Strength Action Button */}
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-slate-500 italic">
+            Click Check Strength after typing to run complete security analysis.
           </p>
-        )}
-      </div>
 
-      {/* Analysis Results (Rendered live when password is entered) */}
-      {inputPassword.length > 0 && (
-        <div className="space-y-6">
+          <button
+            type="submit"
+            disabled={!inputPassword || inputPassword.trim().length === 0}
+            className="flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 shadow-cyber-glow hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Check Strength</span>
+          </button>
+        </div>
+      </form>
+
+      {/* Analysis Results (Rendered ONLY after user clicks Check Strength) */}
+      {checkedData && (
+        <div className="space-y-6 animate-fadeIn">
           {/* Strength Meter & Memorability Score */}
-          <StrengthMeter strengthInfo={strengthInfo} />
+          <StrengthMeter strengthInfo={checkedData.strengthInfo} />
 
           {/* Cryptographic Entropy & Character Distribution */}
-          <EntropyDisplay entropyInfo={entropyInfo} />
+          <EntropyDisplay entropyInfo={checkedData.entropyInfo} />
         </div>
       )}
 

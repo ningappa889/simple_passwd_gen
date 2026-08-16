@@ -51,8 +51,9 @@ export default function App() {
   const [entropyInfo, setEntropyInfo] = useState(initialEntropy);
   const [strengthInfo, setStrengthInfo] = useState(initialStrength);
 
-  // Modals & History State
-  const [sessionHistory, setSessionHistory] = useState([]);
+  // Modals & History State (Separated Generator & Checker histories)
+  const [generatorHistory, setGeneratorHistory] = useState([]);
+  const [checkerHistory, setCheckerHistory] = useState([]);
   const [isBatchOpen, setIsBatchOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
@@ -77,7 +78,7 @@ export default function App() {
     setEntropyInfo(entropy);
     setStrengthInfo(strength);
 
-    // Add to session history (in memory only)
+    // Add to generator history (in memory only)
     const accObj = ACCOUNT_TYPES.find(a => a.id === selectedAccount);
     const historyItem = {
       password: newPassword,
@@ -85,8 +86,12 @@ export default function App() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     };
 
-    setSessionHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Max 20 items
+    setGeneratorHistory(prev => [historyItem, ...prev.slice(0, 19)]); // Max 20 items
   }, [style, length, includeUppercase, includeLowercase, includeNumbers, includeSymbols, selectedAccount]);
+
+  const handleAddCheckerHistory = useCallback((entry) => {
+    setCheckerHistory(prev => [entry, ...prev.slice(0, 19)]);
+  }, []);
 
   // When account type changes, apply default account policy
   const handleSelectAccount = (accId) => {
@@ -124,7 +129,7 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        historyCount={sessionHistory.length}
+        historyCount={generatorHistory.length + checkerHistory.length}
         onOpenHistory={() => setIsHistoryOpen(true)}
       />
 
@@ -202,7 +207,7 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'checker' && <PasswordChecker />}
+        {activeTab === 'checker' && <PasswordChecker onAddCheckerHistory={handleAddCheckerHistory} />}
         {activeTab === 'how-it-works' && <HowItWorks />}
         {activeTab === 'security' && <SecurityInfo />}
         {activeTab === 'about' && <About />}
@@ -229,8 +234,12 @@ export default function App() {
       <HistoryDrawer
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
-        history={sessionHistory}
-        onClearHistory={() => setSessionHistory([])}
+        generatorHistory={generatorHistory}
+        checkerHistory={checkerHistory}
+        onClearHistory={(historyType) => {
+          if (historyType === 'generator') setGeneratorHistory([]);
+          else setCheckerHistory([]);
+        }}
       />
 
     </div>
