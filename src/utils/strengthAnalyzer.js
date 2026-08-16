@@ -10,7 +10,7 @@
  * @param {number} entropyBits 
  * @returns {Object}
  */
-export function evaluatePasswordStrength(password, style, entropyBits) {
+export function evaluatePasswordStrength(password, style, initialEntropyBits) {
   if (!password) {
     return {
       score: 0,
@@ -27,8 +27,11 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
 
   const warnings = [];
   const uniqueCount = new Set(password.split('')).size;
+  let effectiveBits = initialEntropyBits;
 
-  // Check for common bad patterns
+  // Check for common bad patterns & dictionary words
+  const isCommonPattern = /(password|admin|welcome|qwerty|1234|abcd|pass123|google|github|email|login|user|123456)/i.test(password);
+
   if (/(.)\1{2,}/.test(password)) {
     warnings.push('Contains 3+ repeated characters in a row.');
   }
@@ -37,11 +40,12 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
     warnings.push(`Extremely low character diversity: Only ${uniqueCount} unique character(s) used.`);
   }
 
-  if (/(1234|qwerty|password|admin|google|github|email|abc|123|aaa|bbb)/i.test(password)) {
-    warnings.push('Contains predictable keyboard sequence or common word.');
+  if (isCommonPattern) {
+    warnings.push('Contains a heavily leaked dictionary term or predictable sequence (e.g. "password", "123").');
+    effectiveBits = Math.min(effectiveBits, 28.0); // Heavy penalty for common dictionary words
   }
 
-  // Determine Strength Label & Percent based on entropy bits and pattern warnings
+  // Determine Strength Label & Percent based on effective entropy bits and pattern warnings
   let score = 0;
   let label = 'Weak';
   let color = 'bg-red-500';
@@ -49,29 +53,22 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
   let borderColor = 'border-red-500/30';
   let percent = 25;
 
-  // Force WEAK rating if character diversity is extremely low (e.g. "aaaaaaaaaaaaaaaaaa")
-  if (uniqueCount <= 2 && password.length >= 4) {
+  // Force WEAK rating if character diversity is extremely low or contains common dictionary words
+  if ((uniqueCount <= 2 && password.length >= 4) || isCommonPattern || effectiveBits < 45) {
     score = 0;
     label = 'Weak';
     color = 'bg-red-500';
     textColor = 'text-red-400';
     borderColor = 'border-red-500/50';
-    percent = 15;
-  } else if (entropyBits < 45) {
-    score = 0;
-    label = 'Weak';
-    color = 'bg-red-500';
-    textColor = 'text-red-400';
-    borderColor = 'border-red-500/40';
-    percent = 25;
-  } else if (entropyBits < 65) {
+    percent = isCommonPattern ? 15 : 25;
+  } else if (effectiveBits < 65) {
     score = 1;
     label = 'Moderate';
     color = 'bg-amber-500';
     textColor = 'text-amber-400';
     borderColor = 'border-amber-500/40';
     percent = 50;
-  } else if (entropyBits < 85) {
+  } else if (effectiveBits < 85) {
     score = 2;
     label = 'Strong';
     color = 'bg-emerald-500';
@@ -91,11 +88,14 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
   let memorability = 'Low';
   let memorabilityExplanation = 'Random character sequences are high in randomness but hard for humans to remember without a password manager.';
 
-  if (uniqueCount <= 2) {
+  if (isCommonPattern) {
+    memorability = 'High';
+    memorabilityExplanation = 'Very easy to remember, but extremely unsafe because dictionary words and predictable numbers are guessed instantly by automated hacker tools.';
+  } else if (uniqueCount <= 2) {
     memorability = 'Low';
     memorabilityExplanation = 'Repetitive single-character patterns offer no security against automated guessing.';
   } else if (style === 'passphrase') {
-    if (entropyBits >= 75) {
+    if (effectiveBits >= 75) {
       memorability = 'Very High';
       memorabilityExplanation = 'Uses randomly selected natural words combined with numbers and symbols, making it effortless to visualize and remember while remaining difficult to guess.';
     } else {
