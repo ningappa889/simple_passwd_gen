@@ -68,9 +68,8 @@ export const COMMON_BREACHED_PASSWORDS = new Set([
 ]);
 
 /**
- * Checks if a password is a known breached password or a short variation of one.
- * If a long password (e.g. >16 chars) contains a dictionary word but has 12+ random characters appended,
- * it is NOT marked as breached because the high-entropy suffix protects it.
+ * Checks if a password is an EXACT MATCH in the common breached passwords dictionary.
+ * Marks isBreached as true ONLY if the exact entered password is found in the list.
  * 
  * @param {string} password 
  * @returns {Object|null} Breach info if found, null if clean
@@ -79,7 +78,7 @@ export function checkBreachStatus(password) {
   if (!password) return null;
   const cleanPwd = password.toLowerCase().trim();
 
-  // 1. Direct exact match in breach dictionary
+  // Strict EXACT MATCH check only against breach dictionary
   if (COMMON_BREACHED_PASSWORDS.has(cleanPwd)) {
     return {
       isBreached: true,
@@ -87,22 +86,6 @@ export function checkBreachStatus(password) {
       reason: 'Exact match found in public data breach dictionaries (RockYou, HaveIBeenPwned).',
       estimatedExposures: '5,000,000+ data leaks'
     };
-  }
-
-  // 2. Short variations (e.g. "password123!", "myAdmin123")
-  // Only mark as breached if string is short (<= 16 chars) or remaining random chars < 8
-  for (const breachedTerm of COMMON_BREACHED_PASSWORDS) {
-    if (breachedTerm.length >= 5 && cleanPwd.includes(breachedTerm)) {
-      const remainingLength = cleanPwd.length - breachedTerm.length;
-      if (cleanPwd.length <= 16 || remainingLength < 8) {
-        return {
-          isBreached: true,
-          severity: 'High',
-          reason: `Short variation containing top leaked dictionary term "${breachedTerm}".`,
-          estimatedExposures: '1,000,000+ data leaks'
-        };
-      }
-    }
   }
 
   return {
