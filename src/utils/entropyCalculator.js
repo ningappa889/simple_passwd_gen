@@ -2,6 +2,7 @@ import { WORDLIST, LOWERCASE, UPPERCASE, NUMBERS, SYMBOLS } from '../data/wordli
 
 /**
  * Calculates bit entropy and estimated brute force crack time for a given password/passphrase.
+ * Accounts for character set diversity, unique characters, and repetition penalties.
  * 
  * @param {string} password The generated password
  * @param {string} style Generation style ('passphrase' | 'strong' | 'max')
@@ -14,11 +15,13 @@ export function calculateEntropy(password, style = 'strong') {
       poolSize: 0,
       crackTimeDisplay: 'Instant',
       crackTimeSeconds: 0,
+      uniqueCount: 0,
       charBreakdown: { lower: 0, upper: 0, number: 0, symbol: 0, words: 0 }
     };
   }
 
   const length = password.length;
+  const uniqueCount = new Set(password.split('')).size;
 
   // Detect character set inclusion
   let hasLower = /[a-z]/.test(password);
@@ -36,7 +39,6 @@ export function calculateEntropy(password, style = 'strong') {
 
   // Passphrase specific entropy calculation vs Random string calculation
   if (style === 'passphrase' && (password.includes('-') || password.includes('.') || password.includes('_'))) {
-    // Split into segments by separator
     const segments = password.split(/[-._]/);
     const wordMatches = segments.filter(seg => {
       const cleanSeg = seg.replace(/[^a-zA-Z]/g, '');
@@ -44,16 +46,21 @@ export function calculateEntropy(password, style = 'strong') {
     });
 
     const wordCount = Math.max(1, wordMatches.length);
-    const wordListEntropyPerWord = Math.log2(WORDLIST.length); // ~9.2 bits per word from 600 word list
+    const wordListEntropyPerWord = Math.log2(WORDLIST.length); // ~9.4 bits per word
 
     bits = wordCount * wordListEntropyPerWord;
-    if (hasNumber) bits += 6.6; // ~6.6 bits for 2-digit random number
-    if (hasSymbol) bits += 4.7; // ~4.7 bits for random symbol selection
-    if (hasUpper) bits += wordCount * 1.0; // 1 bit per capitalized word
+    if (hasNumber) bits += 6.6;
+    if (hasSymbol) bits += 4.7;
+    if (hasUpper) bits += wordCount * 1.0;
   } else {
     // Standard Shannon / Hartley entropy formula: E = L * log2(Pool)
     if (poolSize > 0) {
-      bits = length * Math.log2(poolSize);
+      if (uniqueCount <= 3 && length >= 4) {
+        // Severe repetition penalty for passwords like "aaaaaaaaaaaaaaaaaa" or "111111"
+        bits = uniqueCount * Math.log2(poolSize) + (length - uniqueCount) * 0.25;
+      } else {
+        bits = length * Math.log2(poolSize);
+      }
     }
   }
 
@@ -70,6 +77,7 @@ export function calculateEntropy(password, style = 'strong') {
   return {
     bits,
     poolSize,
+    uniqueCount,
     crackTimeDisplay,
     secondsToCrack,
     charBreakdown: {

@@ -26,17 +26,22 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
   }
 
   const warnings = [];
+  const uniqueCount = new Set(password.split('')).size;
 
   // Check for common bad patterns
   if (/(.)\1{2,}/.test(password)) {
     warnings.push('Contains 3+ repeated characters in a row.');
   }
 
-  if (/(1234|qwerty|password|admin|google|github|email)/i.test(password)) {
+  if (uniqueCount <= 2 && password.length >= 4) {
+    warnings.push(`Extremely low character diversity: Only ${uniqueCount} unique character(s) used.`);
+  }
+
+  if (/(1234|qwerty|password|admin|google|github|email|abc|123|aaa|bbb)/i.test(password)) {
     warnings.push('Contains predictable keyboard sequence or common word.');
   }
 
-  // Determine Strength Label & Percent based on entropy bits and length
+  // Determine Strength Label & Percent based on entropy bits and pattern warnings
   let score = 0;
   let label = 'Weak';
   let color = 'bg-red-500';
@@ -44,7 +49,15 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
   let borderColor = 'border-red-500/30';
   let percent = 25;
 
-  if (entropyBits < 45) {
+  // Force WEAK rating if character diversity is extremely low (e.g. "aaaaaaaaaaaaaaaaaa")
+  if (uniqueCount <= 2 && password.length >= 4) {
+    score = 0;
+    label = 'Weak';
+    color = 'bg-red-500';
+    textColor = 'text-red-400';
+    borderColor = 'border-red-500/50';
+    percent = 15;
+  } else if (entropyBits < 45) {
     score = 0;
     label = 'Weak';
     color = 'bg-red-500';
@@ -78,7 +91,10 @@ export function evaluatePasswordStrength(password, style, entropyBits) {
   let memorability = 'Low';
   let memorabilityExplanation = 'Random character sequences are high in randomness but hard for humans to remember without a password manager.';
 
-  if (style === 'passphrase') {
+  if (uniqueCount <= 2) {
+    memorability = 'Low';
+    memorabilityExplanation = 'Repetitive single-character patterns offer no security against automated guessing.';
+  } else if (style === 'passphrase') {
     if (entropyBits >= 75) {
       memorability = 'Very High';
       memorabilityExplanation = 'Uses randomly selected natural words combined with numbers and symbols, making it effortless to visualize and remember while remaining difficult to guess.';
