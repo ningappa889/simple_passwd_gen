@@ -3,11 +3,12 @@ import { getSecureRandomInt, getRandomArrayElement, secureShuffleArray } from '.
 
 /**
  * Generates a memorable passphrase using cryptographically secure random words and symbols.
- * Guarantees that total character length strictly matches reqLength.
+ * Strictly respects active character set checkboxes (Uppercase, Lowercase, Numbers, Symbols).
  * 
  * @param {Object} options
- * @param {number} options.length Desired target length (12 - 32)
+ * @param {number} options.length Desired target length (8 - 64)
  * @param {boolean} options.includeUppercase
+ * @param {boolean} options.includeLowercase
  * @param {boolean} options.includeNumbers
  * @param {boolean} options.includeSymbols
  * @returns {string}
@@ -31,7 +32,6 @@ export function generateMemorablePassphrase(options = {}) {
   else if (reqLength <= 28) wordCount = 4;
   else wordCount = 5;
 
-  // Select unique random words from WORDLIST
   let wordPool = [...WORDLIST];
   if (reqLength <= 16) {
     wordPool = wordPool.filter(w => w.length <= 5);
@@ -43,28 +43,36 @@ export function generateMemorablePassphrase(options = {}) {
     const wordIndex = getSecureRandomInt(wordPool.length);
     let word = wordPool.splice(wordIndex, 1)[0];
 
-    if (!includeUppercase) {
+    if (!includeUppercase && includeLowercase) {
+      // All lowercase
       word = word.toLowerCase();
+    } else if (includeUppercase && !includeLowercase) {
+      // All uppercase
+      word = word.toUpperCase();
+    } else if (!includeUppercase && !includeLowercase) {
+      // No letters allowed
+      word = String(getSecureRandomInt(9000) + 1000);
     } else {
-      word = word.charAt(0).toUpperCase() + word.slice(1);
+      // Standard Title Case (Capitalized first letter)
+      word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }
     selectedWords.push(word);
   }
 
-  // Joiner separators (e.g. -, _, .)
+  // Separators
   const separators = ['-', '.', '_'];
   const separator = getRandomArrayElement(separators);
 
   let passphraseParts = [...selectedWords];
 
-  // Insert random number (e.g. 7 or 82) into one of the word positions
+  // Insert numbers if enabled
   if (includeNumbers) {
-    const num = getSecureRandomInt(90) + 10; // 2-digit number
+    const num = getSecureRandomInt(90) + 10;
     const numPos = getSecureRandomInt(passphraseParts.length);
     passphraseParts[numPos] += num.toString();
   }
 
-  // Insert random symbol (e.g. !, @, #, $) at a random boundary
+  // Insert symbols if enabled
   if (includeSymbols) {
     const symbol = getRandomArrayElement(SYMBOLS.split(''));
     const symPos = getSecureRandomInt(passphraseParts.length);
@@ -73,12 +81,16 @@ export function generateMemorablePassphrase(options = {}) {
 
   let passphrase = passphraseParts.join(separator);
 
-  // Pad passphrase if it falls short of reqLength
+  // Pad passphrase if short of reqLength
   while (passphrase.length < reqLength) {
     if (includeNumbers && getSecureRandomInt(2) === 0) {
       passphrase += getSecureRandomInt(10);
     } else if (includeSymbols && getSecureRandomInt(2) === 0) {
       passphrase += getRandomArrayElement(SYMBOLS.split(''));
+    } else if (includeLowercase && !includeUppercase) {
+      passphrase += getRandomArrayElement(LOWERCASE.split(''));
+    } else if (includeUppercase && !includeLowercase) {
+      passphrase += getRandomArrayElement(UPPERCASE.split(''));
     } else if (includeLowercase) {
       passphrase += getRandomArrayElement(LOWERCASE.split(''));
     } else {
@@ -86,9 +98,16 @@ export function generateMemorablePassphrase(options = {}) {
     }
   }
 
-  // Slice passphrase to exact reqLength if it exceeds
+  // Slice passphrase to exact reqLength
   if (passphrase.length > reqLength) {
     passphrase = passphrase.slice(0, reqLength);
+  }
+
+  // Final strict character set enforcement
+  if (!includeUppercase) {
+    passphrase = passphrase.toLowerCase();
+  } else if (!includeLowercase) {
+    passphrase = passphrase.toUpperCase();
   }
 
   return passphrase;
@@ -96,7 +115,7 @@ export function generateMemorablePassphrase(options = {}) {
 
 /**
  * Generates a random character string based on active character sets.
- * Example: vG7!qL9@xP2#kM8
+ * Strictly enforces selected character options.
  * 
  * @param {Object} options
  * @param {number} options.length
@@ -140,8 +159,8 @@ export function generateStrongPassword(options = {}) {
 
   // Fallback if user turned off all checkboxes
   if (pool.length === 0) {
-    pool = LOWERCASE + NUMBERS;
-    guaranteedChars.push(getRandomArrayElement(LOWERCASE.split('')));
+    pool = NUMBERS;
+    guaranteedChars.push(getRandomArrayElement(NUMBERS.split('')));
   }
 
   const poolArray = pool.split('');
@@ -152,8 +171,16 @@ export function generateStrongPassword(options = {}) {
     passwordChars.push(getRandomArrayElement(poolArray));
   }
 
-  // Shuffle and slice to strictly match target length
-  return secureShuffleArray(passwordChars).slice(0, reqLength).join('');
+  let passwordStr = secureShuffleArray(passwordChars).slice(0, reqLength).join('');
+
+  // Final strict character set enforcement
+  if (!includeUppercase) {
+    passwordStr = passwordStr.toLowerCase();
+  } else if (!includeLowercase) {
+    passwordStr = passwordStr.toUpperCase();
+  }
+
+  return passwordStr;
 }
 
 /**
