@@ -53,11 +53,19 @@ export function calculateEntropy(password, style = 'strong') {
     if (hasSymbol) bits += 4.7;
     if (hasUpper) bits += wordCount * 1.0;
   } else {
+    // Detect structural pattern: Single word/name + year or simple number suffix/prefix
+    // e.g. "mallikarjun2004", "admin123", "basavaraj2005", "2004mallikarjun"
+    const isWordNumberPattern = /^[a-zA-Z]{3,}(19\d\d|20\d\d|\d{1,6})$/i.test(password) ||
+                                /^(19\d\d|20\d\d|\d{1,6})[a-zA-Z]{3,}$/i.test(password);
+
     // Standard Shannon / Hartley entropy formula: E = L * log2(Pool)
     if (poolSize > 0) {
       if (uniqueCount <= 3 && length >= 4) {
         // Severe repetition penalty for passwords like "aaaaaaaaaaaaaaaaaa" or "111111"
         bits = uniqueCount * Math.log2(poolSize) + (length - uniqueCount) * 0.25;
+      } else if (isWordNumberPattern) {
+        // In dictionary rule attacks, search space for [word/name] + [year/digits] is ~24 bits max
+        bits = Math.min(length * Math.log2(poolSize), 24.5);
       } else {
         bits = length * Math.log2(poolSize);
       }

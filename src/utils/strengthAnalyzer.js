@@ -102,12 +102,19 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits, us
   // 3. Check for common bad patterns & dictionary words
   const isCommonPattern = /(password|admin|welcome|qwerty|1234|abcd|pass123|google|github|email|login|user|123456)/i.test(password);
 
+  // 4. Detect structural pattern: Single word/name + year or simple number suffix/prefix (e.g. "mallikarjun2004", "admin123")
+  const isWordNumberPattern = /^[a-zA-Z]{3,}(19\d\d|20\d\d|\d{1,6})$/i.test(password) ||
+                              /^(19\d\d|20\d\d|\d{1,6})[a-zA-Z]{3,}$/i.test(password);
+
   if (breachInfo && breachInfo.isBreached) {
     warnings.push(`🚨 COMPROMISED / BREACHABLE PASSWORD: ${breachInfo.reason}`);
     effectiveBits = 10.0;
   } else if (personalRisk.hasRisk) {
     warnings.push(personalRisk.warningMessage);
     effectiveBits = Math.min(effectiveBits, 22.0); // Heavily downgrade effective entropy due to OSINT predictability
+  } else if (isWordNumberPattern) {
+    warnings.push('⚠️ PREDICTABLE PATTERN VULNERABILITY: Password consists of a single name/word combined with a year or number sequence. Attackers crack this in milliseconds using hybrid dictionary rules.');
+    effectiveBits = Math.min(effectiveBits, 24.5);
   } else if (isCommonPattern) {
     if (password.length <= 16) {
       warnings.push('Contains a heavily leaked dictionary term or predictable sequence (e.g. "password", "123").');
@@ -220,12 +227,14 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits, us
   const effectiveSecondsToCrack = (combinations / 2) / guessesPerSecond;
   const effectiveCrackTimeDisplay = formatCrackTime(effectiveSecondsToCrack);
 
-  const hasPenalty = effectiveBits < initialEntropyBits;
+  const hasPenalty = effectiveBits < initialEntropyBits || isWordNumberPattern;
   let penaltyReason = null;
   if (breachInfo && breachInfo.isBreached) {
     penaltyReason = 'Public Data Leak Match';
   } else if (personalRisk && personalRisk.hasRisk) {
     penaltyReason = 'Targeted OSINT Personal Info';
+  } else if (isWordNumberPattern) {
+    penaltyReason = 'Predictable Word + Year Pattern';
   } else if (isCommonPattern) {
     penaltyReason = 'Predictable Pattern / Dictionary Word';
   }

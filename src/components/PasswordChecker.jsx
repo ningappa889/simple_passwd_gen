@@ -140,7 +140,10 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
                 id="target-name"
                 type="text"
                 value={targetName}
-                onChange={(e) => setTargetName(e.target.value)}
+                onChange={(e) => {
+                  setTargetName(e.target.value);
+                  if (checkedData) setCheckedData(null);
+                }}
                 placeholder="e.g. Basavaraj"
                 className="w-full bg-slate-900 text-slate-200 font-mono text-xs rounded-lg px-3 py-2 border border-slate-800 focus:border-cyan-500 focus:outline-none placeholder:text-slate-600"
               />
@@ -155,7 +158,10 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
                 id="target-year"
                 type="text"
                 value={targetYear}
-                onChange={(e) => setTargetYear(e.target.value)}
+                onChange={(e) => {
+                  setTargetYear(e.target.value);
+                  if (checkedData) setCheckedData(null);
+                }}
                 placeholder="e.g. 2005"
                 className="w-full bg-slate-900 text-slate-200 font-mono text-xs rounded-lg px-3 py-2 border border-slate-800 focus:border-cyan-500 focus:outline-none placeholder:text-slate-600"
               />
