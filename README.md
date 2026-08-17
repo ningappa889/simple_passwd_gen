@@ -44,7 +44,7 @@ It generates strong passwords and memorable passphrases directly in your browser
 
 ## 🛠️ Built With
 
-*(💡 Tip: Hold **Ctrl** / **Cmd** or **middle-click** any link below to open it in a new tab on GitHub)*
+*(💡 Tip: Hold **Ctrl** / **Cmd** or **middle-click** any link below to open it in a new tab on browser)*
 
 - <a href="https://react.dev" target="_blank" rel="noopener noreferrer">React</a>
 - <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">Vite</a>
