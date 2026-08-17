@@ -42,6 +42,30 @@ It generates strong passwords and memorable passphrases directly in your browser
 
 ---
 
+## 🛠️ Built With
+
+- <a href="https://react.dev" target="_blank" rel="noopener noreferrer">React</a>
+- <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">Vite</a>
+- <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer">Tailwind CSS</a>
+- <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API" target="_blank" rel="noopener noreferrer">Web Crypto API</a>
+- <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer">Lucide Icons</a>
+
+---
+
+## 📅 Project Timeline & Version History
+
+- **v2.5 (Current Release — August 2026)**
+  - Integrated Targeted OSINT Personal Metadata Vulnerability Audit (Name & Birth Year detection with l33t-speak normalization).
+  - Redesigned professional glassmorphic Header and aligned full-width page layout.
+- **v2.0**
+  - Added Memorable Diceware Passphrase engine and Account-Specific Policy Presets (Banking, GitHub, Google, UPI, Wi-Fi, etc.).
+- **v1.5**
+  - Implemented Real-Time Shannon & Diceware Entropy Bit Calculator, Crack Time Estimator, and Session History Drawer.
+- **v1.0**
+  - Initial Release — 100% Client-Side Web Cryptographic Password Engine.
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
@@ -49,3 +73,34 @@ It generates strong passwords and memorable passphrases directly in your browser
 ```bash
 git clone https://github.com/ningappa889/simple_passwd_gen.git
 cd simple_passwd_gen
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Run Locally
+
+```bash
+npm run dev
+```
+
+Open <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer">http://localhost:3000</a> in your browser.
+
+---
+
+## 📜 Available Commands
+
+| Command | Action |
+| :--- | :--- |
+| `npm run dev` | Starts local development server |
+| `npm run build` | Builds production bundle |
+| `npm run preview` | Previews compiled production build |
+
+---
+
+## 📄 License
+
+This project is licensed under the <a href="https://github.com/ningappa889/simple_passwd_gen/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>. Created by <a href="https://github.com/ningappa889" target="_blank" rel="noopener noreferrer">Ningappa</a>.
