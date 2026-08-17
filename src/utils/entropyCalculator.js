@@ -95,7 +95,7 @@ export function calculateEntropy(password, style = 'strong') {
  * @param {number} seconds 
  * @returns {string}
  */
-function formatCrackTime(seconds) {
+export function formatCrackTime(seconds) {
   if (seconds < 0.001) return 'Instant (< 1 ms)';
   if (seconds < 1) return 'Less than a second';
   if (seconds < 60) return `${Math.round(seconds)} seconds`;

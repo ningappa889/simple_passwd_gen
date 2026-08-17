@@ -30,9 +30,20 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
       { name: targetName, birthYear: targetYear }
     );
 
+    // Merge OSINT / Breach / Pattern penalties into entropyInfo for display consistency
+    const finalEntropyInfo = {
+      ...entropyInfo,
+      rawBits: entropyInfo.bits,
+      rawCrackTimeDisplay: entropyInfo.crackTimeDisplay,
+      bits: strengthInfo.effectiveBits,
+      crackTimeDisplay: strengthInfo.effectiveCrackTimeDisplay,
+      hasPenalty: strengthInfo.hasPenalty,
+      penaltyReason: strengthInfo.penaltyReason
+    };
+
     setCheckedData({
       password: inputPassword,
-      entropyInfo,
+      entropyInfo: finalEntropyInfo,
       strengthInfo
     });
 
@@ -40,7 +51,7 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
       onAddCheckerHistory({
         password: inputPassword,
         label: strengthInfo.label,
-        bits: entropyInfo.bits,
+        bits: strengthInfo.effectiveBits,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       });
     }

@@ -4,8 +4,12 @@ import { Cpu, Clock, Layers, Lock, ShieldAlert, Sparkles } from 'lucide-react';
 export default function EntropyDisplay({ entropyInfo = {} }) {
   const {
     bits = 0,
+    rawBits = 0,
     poolSize = 0,
     crackTimeDisplay = 'Instant',
+    rawCrackTimeDisplay = '',
+    hasPenalty = false,
+    penaltyReason = null,
     charBreakdown = { lower: 0, upper: 0, number: 0, symbol: 0, length: 0 }
   } = entropyInfo || {};
 
@@ -24,12 +28,20 @@ export default function EntropyDisplay({ entropyInfo = {} }) {
       {/* Bit Entropy Big Card */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         
-        <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-center">
-          <span className="text-xs font-mono text-slate-400 block mb-1">Shannon Entropy</span>
-          <span className="text-2xl font-bold font-mono bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+        <div className={`p-3.5 rounded-xl bg-slate-950/70 border text-center ${hasPenalty ? 'border-amber-500/40 bg-amber-950/10' : 'border-slate-800'}`}>
+          <span className="text-xs font-mono text-slate-400 block mb-1">
+            {hasPenalty ? 'Effective Entropy' : 'Shannon Entropy'}
+          </span>
+          <span className={`text-2xl font-bold font-mono ${hasPenalty ? 'text-amber-400' : 'bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent'}`}>
             {bits} bits
           </span>
-          <span className="text-[10px] text-slate-500 block mt-1">Randomness Density</span>
+          <span className="text-[10px] text-slate-500 block mt-1">
+            {hasPenalty && rawBits > 0 ? (
+              <span className="text-amber-400/90 font-mono">⚠️ Reduced from {rawBits} bits</span>
+            ) : (
+              'Randomness Density'
+            )}
+          </span>
         </div>
 
         <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-center">
@@ -40,12 +52,18 @@ export default function EntropyDisplay({ entropyInfo = {} }) {
           <span className="text-[10px] text-slate-500 block mt-1">Active Combination Space</span>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-center">
+        <div className={`p-3.5 rounded-xl bg-slate-950/70 border text-center ${hasPenalty ? 'border-rose-500/40 bg-rose-950/10' : 'border-slate-800'}`}>
           <span className="text-xs font-mono text-slate-400 block mb-1">Brute-Force Estimate</span>
-          <span className="text-base font-bold font-mono text-emerald-300 truncate block">
+          <span className={`text-base font-bold font-mono truncate block ${hasPenalty ? 'text-rose-400' : 'text-emerald-300'}`}>
             {crackTimeDisplay}
           </span>
-          <span className="text-[10px] text-slate-500 block mt-1">At 100B guesses/sec</span>
+          <span className="text-[10px] text-slate-500 block mt-1">
+            {hasPenalty ? (
+              <span className="text-rose-400/90 font-mono font-semibold">⚠️ {penaltyReason || 'Targeted OSINT Attack'}</span>
+            ) : (
+              'At 100B guesses/sec'
+            )}
+          </span>
         </div>
 
       </div>

@@ -1,4 +1,5 @@
 import { checkBreachStatus } from '../data/commonBreachedPasswords.js';
+import { formatCrackTime } from './entropyCalculator.js';
 
 /**
  * Normalizes l33t-speak to plain lowercase text for pattern matching
@@ -213,6 +214,22 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits, us
     memorabilityExplanation = 'Maximum security high-entropy string designed for maximum machine resistance. Recommended for auto-fill via password manager.';
   }
 
+  // Calculate crack time based on effective entropy bits
+  const guessesPerSecond = 100_000_000_000;
+  const combinations = Math.pow(2, effectiveBits);
+  const effectiveSecondsToCrack = (combinations / 2) / guessesPerSecond;
+  const effectiveCrackTimeDisplay = formatCrackTime(effectiveSecondsToCrack);
+
+  const hasPenalty = effectiveBits < initialEntropyBits;
+  let penaltyReason = null;
+  if (breachInfo && breachInfo.isBreached) {
+    penaltyReason = 'Public Data Leak Match';
+  } else if (personalRisk && personalRisk.hasRisk) {
+    penaltyReason = 'Targeted OSINT Personal Info';
+  } else if (isCommonPattern) {
+    penaltyReason = 'Predictable Pattern / Dictionary Word';
+  }
+
   return {
     score,
     label,
@@ -224,6 +241,11 @@ export function evaluatePasswordStrength(password, style, initialEntropyBits, us
     memorabilityExplanation,
     breachInfo,
     personalRisk,
-    warnings
+    warnings,
+    effectiveBits,
+    effectiveSecondsToCrack,
+    effectiveCrackTimeDisplay,
+    hasPenalty,
+    penaltyReason
   };
 }
