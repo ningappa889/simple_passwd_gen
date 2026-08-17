@@ -3,7 +3,7 @@ import { BookOpen, ShieldAlert, Cpu, Sparkles, CheckCircle2, XCircle } from 'luc
 
 export default function HowItWorks() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+    <div className="w-full space-y-8 animate-fadeIn">
       
       {/* Header Banner */}
       <div className="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 text-center space-y-3">

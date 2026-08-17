@@ -3,7 +3,7 @@ import { ShieldCheck, Lock, EyeOff, Cpu, KeyRound, AlertOctagon, CheckCircle2 } 
 
 export default function SecurityInfo() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+    <div className="w-full space-y-8 animate-fadeIn">
       
       {/* Zero Server Guarantee Hero Card */}
       <div className="glass-card rounded-2xl p-6 sm:p-8 border border-emerald-500/30 text-center space-y-4 bg-gradient-to-b from-emerald-500/10 via-slate-900/60 to-slate-900/90 shadow-cyber-glow">

@@ -3,11 +3,16 @@ import { calculateEntropy } from '../utils/entropyCalculator';
 import { evaluatePasswordStrength } from '../utils/strengthAnalyzer';
 import StrengthMeter from './StrengthMeter';
 import EntropyDisplay from './EntropyDisplay';
-import { ShieldCheck, Lock, Eye, EyeOff, Search, KeyRound, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, Eye, EyeOff, Search, KeyRound, CheckCircle2, User, Calendar, ShieldAlert, Sparkles } from 'lucide-react';
 
 export default function PasswordChecker({ onAddCheckerHistory }) {
   const [inputPassword, setInputPassword] = useState('');
   const [showPassword, setShowPassword] = useState(true);
+
+  // Target OSINT Personal Metadata Fields (Optional)
+  const [targetName, setTargetName] = useState('');
+  const [targetYear, setTargetYear] = useState('');
+
   const [checkedData, setCheckedData] = useState(null);
 
   const handleCheckStrength = (e) => {
@@ -18,7 +23,12 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
     const detectedStyle = isPassphraseLike ? 'passphrase' : 'strong';
 
     const entropyInfo = calculateEntropy(inputPassword, detectedStyle);
-    const strengthInfo = evaluatePasswordStrength(inputPassword, detectedStyle, entropyInfo.bits);
+    const strengthInfo = evaluatePasswordStrength(
+      inputPassword, 
+      detectedStyle, 
+      entropyInfo.bits,
+      { name: targetName, birthYear: targetYear }
+    );
 
     setCheckedData({
       password: inputPassword,
@@ -38,14 +48,13 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
 
   const handleInputChange = (e) => {
     setInputPassword(e.target.value);
-    // Clear previous check output when user starts typing new password until they click Check Strength
     if (checkedData && e.target.value !== checkedData.password) {
       setCheckedData(null);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+    <div className="w-full space-y-8 animate-fadeIn">
       
       {/* Header Banner */}
       <div className="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 text-center space-y-3">
@@ -94,6 +103,55 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
           />
         </div>
 
+        {/* Optional OSINT Personal Metadata Audit Inputs */}
+        <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center space-x-2 text-xs font-mono font-semibold text-cyan-400">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>Targeted OSINT Vulnerability Audit (Optional)</span>
+            </div>
+            <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800">
+              Detects targeted dictionary attacks
+            </span>
+          </div>
+          
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Attackers build custom wordlists using info gathered from social media profiles (name, birth year, pet name). Enter your details below to check if your password is vulnerable to targeted OSINT attacks.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div className="space-y-1">
+              <label htmlFor="target-name" className="text-[11px] font-mono text-slate-400 flex items-center space-x-1.5">
+                <User className="w-3.5 h-3.5 text-slate-500" />
+                <span>Name / Username / Pet Name</span>
+              </label>
+              <input
+                id="target-name"
+                type="text"
+                value={targetName}
+                onChange={(e) => setTargetName(e.target.value)}
+                placeholder="e.g. Basavaraj"
+                className="w-full bg-slate-900 text-slate-200 font-mono text-xs rounded-lg px-3 py-2 border border-slate-800 focus:border-cyan-500 focus:outline-none placeholder:text-slate-600"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="target-year" className="text-[11px] font-mono text-slate-400 flex items-center space-x-1.5">
+                <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <span>Birth Year / Important Year</span>
+              </label>
+              <input
+                id="target-year"
+                type="text"
+                value={targetYear}
+                onChange={(e) => setTargetYear(e.target.value)}
+                placeholder="e.g. 2005"
+                className="w-full bg-slate-900 text-slate-200 font-mono text-xs rounded-lg px-3 py-2 border border-slate-800 focus:border-cyan-500 focus:outline-none placeholder:text-slate-600"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Check Strength Action Button */}
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-slate-500 italic">
@@ -103,7 +161,7 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
           <button
             type="submit"
             disabled={!inputPassword || inputPassword.trim().length === 0}
-            className="flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 shadow-cyber-glow hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-slate-950 shadow-cyber-glow hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Check Strength</span>
@@ -114,6 +172,31 @@ export default function PasswordChecker({ onAddCheckerHistory }) {
       {/* Analysis Results (Rendered ONLY after user clicks Check Strength) */}
       {checkedData && (
         <div className="space-y-6 animate-fadeIn">
+          
+          {/* OSINT Targeted Risk Warning Banner (Rendered if Personal Info Match Found) */}
+          {checkedData.strengthInfo.personalRisk && checkedData.strengthInfo.personalRisk.hasRisk && (
+            <div className="glass-card rounded-2xl p-5 border border-amber-500/50 bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-slate-900/90 space-y-3 animate-fadeIn shadow-lg shadow-amber-950/30">
+              <div className="flex items-center space-x-2 text-amber-400 font-bold text-sm">
+                <ShieldAlert className="w-5 h-5 text-amber-400 animate-pulse shrink-0" />
+                <span>Targeted OSINT Personal Data Risk Detected!</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                <span>Matched Identifier(s):</span>
+                {checkedData.strengthInfo.personalRisk.matchedTokens.map((t, idx) => (
+                  <span key={idx} className="font-mono font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
+                    "{t.value}" ({t.type})
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                <strong className="text-slate-100">Why this is dangerous: </strong>
+                Standard entropy math measures character randomness assuming the password was chosen at random. However, an attacker targeting you specifically will gather personal details from social media or public records (such as your name <code className="text-amber-300 font-mono">{targetName || 'Basavaraj'}</code> or birth year <code className="text-amber-300 font-mono">{targetYear || '2005'}</code>) and feed them into automated cracking tools like <strong>Hashcat</strong>. Combinations combining your personal info are guessed in fractions of a second regardless of total password length.
+              </p>
+            </div>
+          )}
+
           {/* Strength Meter & Memorability Score */}
           <StrengthMeter strengthInfo={checkedData.strengthInfo} />
 
